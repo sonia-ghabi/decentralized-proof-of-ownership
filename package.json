@@ -5,6 +5,8 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
+    "dotenv": "^6.2.0",
+    "ethers": "^4.0.24",
     "js-md5": "^0.7.3"
   },
   "devDependencies": {
