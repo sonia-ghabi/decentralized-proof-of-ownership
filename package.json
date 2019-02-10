@@ -1,0 +1,14 @@
+{
+  "name": "proof-of-ownership",
+  "version": "0.0.1",
+  "author": "Sonia Ghabi <sonia.ghabi@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {},
+  "devDependencies": {
+    "rimraf": "^2.6.3"
+  },
+  "scripts": {
+    "deploy": "cd blockchain; rimraf build; truffle migrate"
+  }
+}
