@@ -4,7 +4,9 @@
   "author": "Sonia Ghabi <sonia.ghabi@gmail.com>",
   "license": "MIT",
   "private": false,
-  "dependencies": {},
+  "dependencies": {
+    "js-md5": "^0.7.3"
+  },
   "devDependencies": {
     "rimraf": "^2.6.3"
   },
