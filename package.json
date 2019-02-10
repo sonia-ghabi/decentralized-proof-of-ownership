@@ -19,7 +19,9 @@
     "rimraf": "^2.6.3"
   },
   "scripts": {
-    "start": "nodemon src/server.js",
-    "deploy": "cd blockchain; rimraf build; truffle migrate"
+    "clean": "rimraf ./blockchain/build",
+    "start": "nodemon ./src/server.js",
+    "deploy": "yarn clean && cd ./blockchain && truffle migrate",
+    "ganache": "ganache-cli --networkId=5777 -l 90000000 -p 7545 -m \"provide accident chronic quote allow crystal like neutral mountain split match you\""
   }
 }
