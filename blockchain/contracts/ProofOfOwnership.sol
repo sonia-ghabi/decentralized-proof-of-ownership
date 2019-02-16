@@ -8,6 +8,7 @@ contract ProofOfOwnership {
         address owner; 
         uint date;  
         bool isValue;
+        string ipfsHash;
     }
 
     // The map that stores all the proof of ownership.
@@ -16,12 +17,12 @@ contract ProofOfOwnership {
     /**
         Save a new proof of ownership.
     */
-    function saveProof(string memory hashing, address owner) public  {
+    function saveProof(string memory hashing, address owner, string memory ipfsHash) public  {
         if (proofMap[hashing].isValue)
         {
             revert("The P.O.O. already exist");
         }
-        proofMap[hashing] = proof(hashing, owner, now, true);
+        proofMap[hashing] = proof(hashing, owner, now, true, ipfsHash);
     } 
 
     /**

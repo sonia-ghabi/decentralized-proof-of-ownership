@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+  </head>
+  <body>
+    <!-- We are going to display it in an <img> tag, so we will only accept image files -->
+    <input
+      type="file"
+      id="fileSelector"
+      accept="images/*"
+      onchange="openFile(event);"
+    />
+    <div id="TheImageContents"></div>
+
+    <script>
+      // This grabs the file contents when the file changes
+      var openFile = function(event) {
+        var input = event.target;
+
+        // Instantiate FileReader
+        var reader = new FileReader();
+        reader.onload = function() {
+          TheFileContents = reader.result;
+          // Update the output to include the <img> tag with the data URL as the source
+          document.getElementById("TheImageContents").innerHTML =
+            '<h2>The image that you selected</h2><p><img width="200" src="' +
+            TheFileContents +
+            '" /></p><button onClick=upload()>Upload image</button><button onClick=check()>Check ownership</button>';
+        };
+        // Produce a data URL (base64 encoded string of the data in the file)
+        // We are retrieving the first file from the FileList object
+        reader.readAsDataURL(input.files[0]);
+      };
+
+      function upload() {
+        const files = document.querySelector("#fileSelector").files;
+        const formData = new FormData();
+        formData.append("img", files[0]);
+        formData.append("owner", "0x48d5b4a2e20aff869fa58600860d5ec615ee0046");
+
+        fetch("/", {
+          method: "POST",
+          body: formData
+        }).then(response => {
+          //console.log(response);
+        });
+      }
+
+      function check() {
+        const files = document.querySelector("#fileSelector").files;
+        const formData = new FormData();
+        formData.append("img", files[0]);
+        formData.append("owner", "0x48d5b4a2e20aff869fa58600860d5ec615ee0046");
+
+        fetch("/check", {
+          method: "POST",
+          body: formData
+        }).then(response => {
+          //console.log(response);
+        });
+      }
+    </script>
+  </body>
+</html>

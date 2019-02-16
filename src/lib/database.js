@@ -53,6 +53,30 @@ class Database {
     // Return the object
     return req.data();
   }
+
+  /**
+   * Read all the documents from the given collection.
+   * @param {string} collectionName
+   */
+  async readAll(collectionName) {
+    // Query the database
+    const res = await this.db.collection(collectionName).get();
+
+    // Build the return object
+    let data = [];
+    res.forEach(function(doc) {
+      // doc.data() is never undefined for query doc snapshots
+      data.push({
+        id: doc.id,
+        owner: doc.data().owner,
+        date: new Date(doc.data().date).toDateString(),
+        name: doc.data().name
+      });
+    });
+
+    // Return the data
+    return data;
+  }
 }
 
 module.exports = Database;

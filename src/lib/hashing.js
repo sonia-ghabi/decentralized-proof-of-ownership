@@ -5,7 +5,7 @@ const md5 = require("js-md5");
  * @param {string} string
  */
 function getHash(string) {
-  const hash = md5(string);
+  const hash = md5(string.toString());
   return hash;
 }
 
