@@ -12,6 +12,7 @@
     "ethers": "^4.0.24",
     "express": "^4.16.4",
     "firebase": "^5.8.2",
+    "firebase-admin": "^7.0.0",
     "ipfs": "^0.34.4",
     "ipfs-http-client": "^29.1.0",
     "js-md5": "^0.7.3",

@@ -1,4 +1,4 @@
-const firebase = require("firebase");
+const admin = require("firebase-admin");
 let instance;
 
 /**
@@ -13,17 +13,23 @@ class Database {
     if (instance) {
       return instance;
     }
-    var config = {
-      apiKey: process.env.apiKey,
-      authDomain: process.env.authDomain,
-      databaseURL: process.env.databaseURL,
-      projectId: process.env.projectId,
-      storageBucket: process.env.storageBucket,
-      messagingSenderId: process.env.messagingSenderId
-    };
-    firebase.initializeApp(config);
-    this.db = firebase.firestore();
+
+    const serviceAccount = require("../private/dbPrivateKey.json");
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      databaseURL: "https://proof-of-ownership-fe435.firebaseio.com"
+    });
+    this.db = admin.firestore();
     instance = this;
+  }
+
+  /**
+   * Verify the authentication token.
+   * @param {string} idToken
+   */
+  async verifyToken(idToken) {
+    const res = await admin.auth().verifyIdToken(idToken);
+    return res.uid;
   }
 
   /**
@@ -32,7 +38,7 @@ class Database {
    * @param {object} object
    * @param {string} id
    */
-  writeData(collectionName, object, id) {
+  async writeData(collectionName, object, id) {
     return this.db
       .collection(collectionName)
       .doc(id)

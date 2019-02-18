@@ -7,7 +7,8 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { withStyles } from "@material-ui/core/styles";
-import { claimOwnership, checkOwnership } from "./lib/upload";
+import { claimOwnership, checkOwnership } from "./lib/apiHelper";
+import firebase from "firebase";
 
 const styles = theme => ({
   previewImage: {
@@ -71,10 +72,16 @@ class UploadModal extends React.Component {
     // Update the state
     this.setState({ actionStatus: ACTION_STATUS.CLAIMING });
 
+    // Get the user token
+    const token = await firebase
+      .auth()
+      .currentUser.getIdToken(/* forceRefresh */ true);
+
     // Make the request to claim the ownership
     const result = await claimOwnership(
       this.props.files,
-      this.state.pictureName
+      this.state.pictureName,
+      token
     );
 
     // Update the status if the request went through successfully
@@ -82,6 +89,9 @@ class UploadModal extends React.Component {
       this.setState({ actionStatus: ACTION_STATUS.CLAIMED });
   }
 
+  /**
+   * Reset the state.
+   */
   resetState() {
     this.setState({
       actionStatus: ACTION_STATUS.CHECKING,

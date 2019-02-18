@@ -20,26 +20,18 @@ const contract = new Contract(contractAddress, ProofContract.abi, wallet);
  * @param {string} owner
  */
 async function saveProof(buffer, owner) {
-  try {
-    // Save the file on IPFS
-    const ipfsHash = await ipfs.saveFile(buffer);
+  // Save the file on IPFS
+  const ipfsHash = await ipfs.saveFile(buffer);
 
-    // Hash the document
-    const hash = Hashing.getHash(buffer);
+  // Hash the document
+  const hash = Hashing.getHash(buffer);
 
-    // Save the proof in the blockchain
-    const results = await contract.saveProof(
-      hash,
-      utils.getAddress(owner),
-      ipfsHash
-    );
+  // Save the proof in the blockchain
+  const results = await contract.saveProof(hash, owner, ipfsHash);
 
-    // Return the IPFS in the results
-    results.ipfsHash = ipfsHash;
-    return results;
-  } catch (e) {
-    throw new Error("Couldn't save proof of ownership");
-  }
+  // Return the IPFS in the results
+  results.ipfsHash = ipfsHash;
+  return results;
 }
 
 /**
@@ -47,17 +39,13 @@ async function saveProof(buffer, owner) {
  * @param {string} hash
  */
 async function getProof(buffer) {
-  try {
-    // Hash the document
-    hash = Hashing.getHash(buffer);
-    const res = await contract.getProof(hash);
-    return {
-      owner: res[0],
-      date: new Date(res[1].toString() * 1000) // Parse timestamp
-    };
-  } catch (e) {
-    throw new Error("Couldn't get proof of ownership");
-  }
+  // Hash the document
+  hash = Hashing.getHash(buffer);
+  const res = await contract.getProof(hash);
+  return {
+    owner: res[0],
+    date: new Date(res[1].toString() * 1000) // Parse timestamp
+  };
 }
 
 module.exports.saveProof = saveProof;

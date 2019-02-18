@@ -5,7 +5,7 @@ contract ProofOfOwnership {
     // Definition of a proof of ownership.
     struct proof { 
         string hashing;
-        address owner; 
+        string owner; 
         uint date;  
         bool isValue;
         string ipfsHash;
@@ -17,7 +17,7 @@ contract ProofOfOwnership {
     /**
         Save a new proof of ownership.
     */
-    function saveProof(string memory hashing, address owner, string memory ipfsHash) public  {
+    function saveProof(string memory hashing, string memory owner, string memory ipfsHash) public  {
         if (proofMap[hashing].isValue)
         {
             revert("The P.O.O. already exist");
@@ -28,7 +28,7 @@ contract ProofOfOwnership {
     /**
         Get a proof of ownership from its hashing.
      */
-    function getProof(string memory hashing) public view returns (address, uint) {
+    function getProof(string memory hashing) public view returns (string memory, uint) {
         if (!proofMap[hashing].isValue)
         {
             revert("The P.O.O. doesn't exist");

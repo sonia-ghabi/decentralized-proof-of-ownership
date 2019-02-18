@@ -52,23 +52,24 @@ app.get("/proof/:hash", async function(req, res) {
  */
 app.post("/", upload.single("img"), async function(req, res) {
   try {
+    // Verify the token
+    const userId = await db.verifyToken(req.body.idToken);
+
     // Save the proof of ownership in the blockchain
-    const tx = await ProofOfOwnership.saveProof(
-      req.file.buffer,
-      req.body.owner
-    );
+    const tx = await ProofOfOwnership.saveProof(req.file.buffer, userId);
     const toWrite = {
-      owner: req.body.owner,
+      owner: userId,
       date: Date.now(),
-      name: req.body.name
+      fileName: req.body.fileName
     };
     // Save it in the database
     await db.writeData("proof", toWrite, tx.ipfsHash);
     res.send(toWrite);
   } catch (e) {
+    console.log(e);
     res
       .status(500) // HTTP status 404: NotFound
-      .send("Not found");
+      .send("Internal server error");
   }
 });
 
@@ -77,6 +78,7 @@ app.post("/check", upload.single("img"), async function(req, res) {
     const tx = await ProofOfOwnership.getProof(req.file.buffer);
     res.send(tx);
   } catch (e) {
+    console.log(e);
     res
       .status(404) // HTTP status 404: NotFound
       .send("Not found");

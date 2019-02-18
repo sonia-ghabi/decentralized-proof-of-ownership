@@ -5,7 +5,6 @@ import AppBar from "@material-ui/core/AppBar";
 import Button from "@material-ui/core/Button";
 import CameraIcon from "@material-ui/icons/PhotoCamera";
 import Card from "@material-ui/core/Card";
-import CardActions from "@material-ui/core/CardActions";
 import CardContent from "@material-ui/core/CardContent";
 import CardMedia from "@material-ui/core/CardMedia";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -13,9 +12,11 @@ import Grid from "@material-ui/core/Grid";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-import { load } from "./lib/upload";
+import SignIn from "./SignIn";
+import firebase from "firebase";
 
 import UploadModal from "./UploadModal";
+import Database from "./lib/firebaseUtils.js";
 
 const styles = theme => ({
   appBar: {
@@ -65,12 +66,10 @@ const styles = theme => ({
   },
   fileInput: {
     display: "none"
+  },
+  grow: {
+    flexGrow: 1
   }
-});
-
-ui.start("#firebaseui-auth-container", {
-  signInOptions: [firebase.auth.EmailAuthProvider.PROVIDER_ID]
-  // Other config options...
 });
 
 class Album extends React.Component {
@@ -83,31 +82,33 @@ class Album extends React.Component {
 
     // ...
     this.fileInput = React.createRef();
+    this.auth = firebase.auth();
 
     // Bind 'this' to be able to reuse it the function itself
     this.handleUploadModalOpen = this.handleUploadModalOpen.bind(this);
     this.handleUploadModalClose = this.handleUploadModalClose.bind(this);
+    this.signInClick = this.signInClick.bind(this);
+    this.signInClose = this.signInClose.bind(this);
+    this.signOut = this.signOut.bind(this);
 
     // Initialize state
     this.state = {
       openUploadDialog: false,
       files: null,
-      cards: []
+      cards: [],
+      openSignIn: false,
+      user: null
     };
-  }
-
-  async componentDidMount() {
-    // Load the album
-    this.loadAlbum();
   }
 
   /**
    * Load the album.
    */
   async loadAlbum() {
-    const albumData = await load();
+    // Get the album data from the database
+    const albumData = await new Database().loadAlbum();
     let imgs = [];
-    albumData.res.forEach(function(albumImage) {
+    albumData.forEach(function(albumImage) {
       imgs.push({
         id: albumImage.id,
         url: "http://localhost:8080/ipfs/" + albumImage.id,
@@ -143,6 +144,28 @@ class Album extends React.Component {
     this.loadAlbum();
   };
 
+  signInClick() {
+    // Update the state
+    this.setState({
+      openSignIn: true
+    });
+  }
+
+  async signInClose() {
+    // Update the state
+    this.setState({
+      openSignIn: false,
+      user: this.auth.currentUser
+    });
+
+    this.loadAlbum();
+  }
+
+  async signOut() {
+    await this.auth.signOut();
+    this.setState({ user: null, cards: [] });
+  }
+
   /**
    * Render the page.
    */
@@ -150,15 +173,34 @@ class Album extends React.Component {
     const props = this.props;
     const { classes } = props;
 
+    const signIn = this.state.openSignIn ? (
+      <SignIn signInSuccess={this.signInClose} />
+    ) : null;
+    const signButton = !this.state.user ? (
+      <Button color="inherit" onClick={this.signInClick}>
+        Sign in
+      </Button>
+    ) : (
+      <Button color="inherit" onClick={this.signOut}>
+        Sign out
+      </Button>
+    );
     return (
       <React.Fragment>
         <CssBaseline />
+        {signIn}
         <AppBar position="static" className={classes.appBar}>
           <Toolbar>
             <CameraIcon className={classes.icon} />
-            <Typography variant="h6" color="inherit" noWrap>
+            <Typography
+              className={classes.grow}
+              variant="h6"
+              color="inherit"
+              noWrap
+            >
               Proof of Ownership
             </Typography>
+            {signButton}
           </Toolbar>
         </AppBar>
         <main>
@@ -188,7 +230,8 @@ class Album extends React.Component {
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={e => this.fileInput.current.click()}
+                      onClick={() => this.fileInput.current.click()}
+                      disabled={this.state.user == null}
                     >
                       Upload your picture
                     </Button>

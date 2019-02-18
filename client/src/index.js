@@ -1,8 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import "./index.css";
 import Album from "./Album";
 import * as serviceWorker from "./serviceWorker";
+import Database from "./lib/firebaseUtils.js";
+
+new Database();
 
 ReactDOM.render(<Album />, document.getElementById("root"));
 
