@@ -28,8 +28,8 @@ class SignIn extends React.Component {
       // We will display Google and Facebook as auth providers.
       signInOptions: [firebase.auth.EmailAuthProvider.PROVIDER_ID],
       callbacks: {
-        signInSuccess() {
-          props.signInSuccess();
+        signInSuccessWithAuthResult(authResult) {
+          props.signInSuccess(authResult.additionalUserInfo.isNewUser);
         }
       },
       credentialHelper: firebaseui.auth.CredentialHelper.NONE

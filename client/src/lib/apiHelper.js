@@ -30,18 +30,29 @@ export async function checkOwnership(files) {
   return await executePost(formData, "check");
 }
 
+export async function generateKeys(idToken) {
+  // Execute the request
+  return await executePost(JSON.stringify({ idToken }), "generateKeys", true);
+}
+
 /**
  * Execute the post request.
  * @param {*} formData
  * @param {*} endpoint
  */
-async function executePost(formData, endpoint) {
+async function executePost(formData, endpoint, isJson = null) {
   // Execute the request
   const url = serverUrl + endpoint;
-  const response = await fetch(url, {
+  let req = {
     method: "POST",
     body: formData
-  });
+  };
+  if (isJson) {
+    req.headers = {
+      "Content-Type": "application/json"
+    };
+  }
+  const response = await fetch(url, req);
   return response;
 }
 

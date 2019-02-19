@@ -7,7 +7,6 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const multer = require("multer");
-//const upload = multer({ dest: "uploads/" });
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Initialize express config
@@ -17,6 +16,9 @@ var bodyParser = require("body-parser");
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 app.use(express.static(path.join(__dirname, "public")));
+
+const crypto = require("crypto");
+const eccrypto = require("eccrypto");
 
 var corsOptions = {
   origin: "http://localhost:3000"
@@ -54,13 +56,19 @@ app.post("/", upload.single("img"), async function(req, res) {
   try {
     // Verify the token
     const userId = await db.verifyToken(req.body.idToken);
+    const userKeys = await db.readData("user", userId);
 
     // Save the proof of ownership in the blockchain
-    const tx = await ProofOfOwnership.saveProof(req.file.buffer, userId);
+    const tx = await ProofOfOwnership.saveProof(
+      req.file.buffer,
+      userId,
+      userKeys.public
+    );
     const toWrite = {
       owner: userId,
       date: Date.now(),
-      fileName: req.body.fileName
+      fileName: req.body.fileName,
+      encryptedKey: tx.encryptedKey
     };
     // Save it in the database
     await db.writeData("proof", toWrite, tx.ipfsHash);
@@ -83,6 +91,23 @@ app.post("/check", upload.single("img"), async function(req, res) {
       .status(404) // HTTP status 404: NotFound
       .send("Not found");
   }
+});
+
+app.post("/generateKeys", async function(req, res) {
+  const token = req.body.idToken;
+
+  // Verify the token
+  const userId = await db.verifyToken(token);
+
+  // Generate the key
+  var privateKey = crypto.randomBytes(32);
+  var publicKey = eccrypto.getPublic(privateKey);
+  const user = {
+    public: publicKey,
+    private: Hashing.encryptBuffer(privateKey)
+  };
+  db.writeData("user", user, userId);
+  res.status("200").send();
 });
 
 app.get("/load", async function(req, res) {

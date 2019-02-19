@@ -2,6 +2,9 @@ const { Contract, Wallet, providers, utils } = require("ethers");
 const ProofContract = require("../../blockchain/build/contracts/ProofOfOwnership.json");
 const ipfs = require("./ipfs.js");
 const Hashing = require("./hashing.js");
+const uuidv1 = require("uuid/v1");
+const crypto = require("crypto");
+const eccrypto = require("eccrypto");
 
 // Set provider
 // Once a Ganache node is running, it behaves very similar to a
@@ -19,9 +22,22 @@ const contract = new Contract(contractAddress, ProofContract.abi, wallet);
  * @param {string} hash
  * @param {string} owner
  */
-async function saveProof(buffer, owner) {
+async function saveProof(buffer, owner, userPublicKey) {
   // Save the file on IPFS
+  const guid = uuidv1();
+  const encryptedBuffer = Hashing.encryptBuffer(buffer, guid);
+  const encryptedKey = await eccrypto.encrypt(userPublicKey, Buffer.from(guid));
+  /*
+  console.log(encryptedKey);
+  console.log(encryptedKey.toString());
+  const decrypted = await eccrypto.decrypt(
+    Hashing.decryptBuffer(userPublicKey.private),
+    encryptedKey
+  );
+  console.log(decrypted.toString("ascii"));
+  */
   const ipfsHash = await ipfs.saveFile(buffer);
+  const ipfsHashEncrypted = await ipfs.saveFile(encryptedBuffer);
 
   // Hash the document
   const hash = Hashing.getHash(buffer);
@@ -31,6 +47,8 @@ async function saveProof(buffer, owner) {
 
   // Return the IPFS in the results
   results.ipfsHash = ipfsHash;
+  results.ipfsHashEncrypted = ipfsHashEncrypted;
+  results.encryptedKey = encryptedKey;
   return results;
 }
 

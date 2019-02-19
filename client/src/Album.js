@@ -18,6 +18,8 @@ import firebase from "firebase";
 import UploadModal from "./UploadModal";
 import Database from "./lib/firebaseUtils.js";
 
+import { generateKeys } from "./lib/apiHelper";
+
 const styles = theme => ({
   appBar: {
     position: "relative"
@@ -99,6 +101,15 @@ class Album extends React.Component {
       openSignIn: false,
       user: null
     };
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        this.setState({ user });
+        this.loadAlbum();
+      } else {
+        this.setState({ user: null });
+      }
+    });
   }
 
   /**
@@ -151,13 +162,16 @@ class Album extends React.Component {
     });
   }
 
-  async signInClose() {
+  async signInClose(isNewUser) {
     // Update the state
     this.setState({
       openSignIn: false,
       user: this.auth.currentUser
     });
-
+    const token = await this.auth.currentUser.getIdToken(
+      /* forceRefresh */ true
+    );
+    if (isNewUser) generateKeys(token);
     this.loadAlbum();
   }
 
