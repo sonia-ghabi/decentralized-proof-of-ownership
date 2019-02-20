@@ -7,7 +7,7 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { withStyles } from "@material-ui/core/styles";
-import { claimOwnership, checkOwnership } from "./lib/apiHelper";
+import { claimOwnership, checkOwnership } from "../lib/apiHelper";
 import firebase from "firebase";
 
 const styles = theme => ({

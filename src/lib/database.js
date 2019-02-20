@@ -1,5 +1,4 @@
 const admin = require("firebase-admin");
-let instance;
 
 /**
  * Class that helps to do operations on the database.
@@ -7,20 +6,14 @@ let instance;
 class Database {
   /**
    * Constructor.
-   * This class is a singleton.
    */
   constructor() {
-    if (instance) {
-      return instance;
-    }
-
-    const serviceAccount = require("../private/dbPrivateKey.json");
+    const serviceAccount = require(process.env.privateKeyPath);
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       databaseURL: "https://proof-of-ownership-fe435.firebaseio.com"
     });
     this.db = admin.firestore();
-    instance = this;
   }
 
   /**
@@ -56,6 +49,7 @@ class Database {
       .collection(collectionName)
       .doc(id)
       .get();
+
     // Return the object
     return req.data();
   }
@@ -85,4 +79,4 @@ class Database {
   }
 }
 
-module.exports = Database;
+module.exports = new Database();

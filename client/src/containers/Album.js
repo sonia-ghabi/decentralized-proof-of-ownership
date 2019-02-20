@@ -12,13 +12,13 @@ import Grid from "@material-ui/core/Grid";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-import SignIn from "./SignIn";
 import firebase from "firebase";
 
 import UploadModal from "./UploadModal";
-import Database from "./lib/firebaseUtils.js";
+import SignIn from "./SignIn";
 
-import { generateKeys } from "./lib/apiHelper";
+import Database from "../lib/databaseHelper";
+import { generateKeys } from "../lib/apiHelper";
 
 const styles = theme => ({
   appBar: {
@@ -116,18 +116,22 @@ class Album extends React.Component {
    * Load the album.
    */
   async loadAlbum() {
-    // Get the album data from the database
-    const albumData = await new Database().loadAlbum();
-    let imgs = [];
-    albumData.forEach(function(albumImage) {
-      imgs.push({
-        id: albumImage.id,
-        url: "http://localhost:8080/ipfs/" + albumImage.id,
-        name: albumImage.name,
-        date: albumImage.date
-      });
+    // Get the proofs from the database
+    const res = await Database.readWithFilter(
+      "proof",
+      "owner",
+      "==",
+      this.state.user.uid
+    );
+    const cards = Object.entries(res).map(([id, data]) => {
+      return {
+        id: id,
+        url: "http://localhost:8080/ipfs/" + id,
+        name: data.name,
+        date: data.date
+      };
     });
-    this.setState({ cards: imgs });
+    this.setState({ cards });
   }
 
   /**

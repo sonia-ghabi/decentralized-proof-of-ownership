@@ -1,10 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import Album from "./Album";
+import Album from "./containers/Album";
 import * as serviceWorker from "./serviceWorker";
-import Database from "./lib/firebaseUtils.js";
-
-new Database();
 
 ReactDOM.render(<Album />, document.getElementById("root"));
 

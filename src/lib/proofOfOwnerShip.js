@@ -1,11 +1,9 @@
-const { Contract, Wallet, providers, utils } = require("ethers");
+const { Contract, Wallet, providers } = require("ethers");
 const ProofContract = require("../../blockchain/build/contracts/ProofOfOwnership.json");
 const ipfs = require("./ipfs.js");
-const Hashing = require("./hashing.js");
+const CryptoUtils = require("./cryptoUtils");
 const uuidv1 = require("uuid/v1");
-const crypto = require("crypto");
 const eccrypto = require("eccrypto");
-const watermark = require("image-watermark");
 const sharp = require("sharp");
 const path = require("path");
 
@@ -24,24 +22,25 @@ const contract = new Contract(contractAddress, ProofContract.abi, wallet);
  *  Save the proof of ownership using the smart contract.
  * @param {string} hash
  * @param {string} owner
+ * @param {Buffer} userPublicKey
  */
 async function saveProof(buffer, owner, userPublicKey) {
   // Save the watermarked file on IPFS
   const watermarked = sharp(buffer).overlayWith(
-    path.join(__basedir, "../watermark.jpeg")
+    path.join(__basedir, "../ressources/watermark.png")
   );
   const ipfsHash = await ipfs.saveFile(watermarked);
 
   // Encrypt the file and save it on IPFS
   const guid = uuidv1();
-  const encryptedBuffer = Hashing.encryptBuffer(buffer, guid);
+  const encryptedBuffer = CryptoUtils.encryptBuffer(buffer, guid);
   const ipfsHashEncrypted = await ipfs.saveFile(encryptedBuffer);
 
   // Encrypt the encryption key with the user public key
   const encryptedKey = await eccrypto.encrypt(userPublicKey, Buffer.from(guid));
 
   // Hash the document
-  const hash = Hashing.getHash(buffer);
+  const hash = CryptoUtils.getHash(buffer);
 
   // Save the proof in the blockchain
   const results = await contract.saveProof(hash, owner, ipfsHash);
@@ -59,7 +58,7 @@ async function saveProof(buffer, owner, userPublicKey) {
  */
 async function getProof(buffer) {
   // Hash the document
-  hash = Hashing.getHash(buffer);
+  hash = CryptoUtils.getHash(buffer);
   const res = await contract.getProof(hash);
   return {
     owner: res[0],
