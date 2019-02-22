@@ -147,6 +147,10 @@ class Album extends React.Component {
    * Search pictures in the global repository
    */
   async searchPictures() {
+    if (!this.state.searchValue) {
+      this.loadMyAlbum();
+      return;
+    }
     const res = await Database.readWithFilter(
       "proof",
       "fileName",
