@@ -48,6 +48,7 @@ class UploadModal extends React.Component {
    * Check if the picture is already owned by someone else.
    */
   async check() {
+    console.log(this.props.files);
     if (this.props.files && this.props.files.length) {
       const result = await checkOwnership(this.props.files);
       // The picture is not owned by anyone, the user can claim the ownership

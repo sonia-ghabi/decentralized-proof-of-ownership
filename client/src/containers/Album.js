@@ -167,7 +167,8 @@ class Album extends React.Component {
         url: "http://localhost:8080/ipfs/" + data.ipfsHash,
         name: data.fileName,
         date: new Date(data.date).toLocaleString(),
-        owner: data.owner
+        owner: data.owner,
+        originalFileName: data.originalFileName
       };
     });
     this.setState({ cards });
@@ -183,7 +184,7 @@ class Album extends React.Component {
     if (res.status == 200) {
       const blob = await res.blob();
       console.log(blob.type);
-      download(blob, card.name + ".jpg"); // Need to save ext in DB and set it in the card
+      download(blob, card.originalFileName);
     }
   }
 

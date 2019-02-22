@@ -12,6 +12,7 @@ export async function claimOwnership(files, fileName, idToken) {
   formData.append("img", files[0]);
   formData.append("fileName", fileName);
   formData.append("idToken", idToken);
+  formData.append("originalFileName", files[0].name);
 
   // Execute the request
   return await executePost(formData, "");

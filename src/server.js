@@ -67,6 +67,8 @@ app.post("/check", upload.single("img"), async function(req, res) {
  * {
  *    file
  *    idToken
+ *    name
+ *    originalFileName
  * }
  */
 app.post("/", upload.single("img"), async function(req, res) {
@@ -91,7 +93,8 @@ app.post("/", upload.single("img"), async function(req, res) {
       fileName: req.body.fileName,
       encryptedKey: tx.encryptedKey,
       ipfsHashEncrypted: tx.ipfsHashEncrypted,
-      ipfsHash: tx.ipfsHash
+      ipfsHash: tx.ipfsHash,
+      originalFileName: req.body.originalFileName
     };
 
     // Save it in the database
@@ -117,7 +120,6 @@ app.post("/", upload.single("img"), async function(req, res) {
  */
 app.post("/getUsageRights", async function(req, res) {
   try {
-    console.log(req.body);
     // Verify the token
     const buyerId = await Database.verifyToken(req.body.idToken);
 
@@ -142,7 +144,7 @@ app.post("/getUsageRights", async function(req, res) {
         console.error("error:", error);
       } else {
         body = CryptoUtils.decryptBuffer(body, key);
-        res.send(body);
+        res.send(body); // Send the image in the response
       }
     });
   } catch (e) {
