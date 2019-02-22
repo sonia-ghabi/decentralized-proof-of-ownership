@@ -35,6 +35,19 @@ export async function generateKeys(idToken) {
   return await executePost(JSON.stringify({ idToken }), "generateKeys", true);
 }
 
+export function getUsageRights(card, idToken) {
+  // Execute the request
+  return executePost(
+    JSON.stringify({
+      hash: card.id,
+      owner: card.owner,
+      idToken: idToken
+    }),
+    "getUsageRights",
+    true
+  );
+}
+
 /**
  * Execute the post request.
  * @param {*} formData

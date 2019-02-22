@@ -48,8 +48,8 @@ module.exports = {
     var privateKey = crypto.randomBytes(32);
     var publicKey = eccrypto.getPublic(privateKey);
     return {
-      publicKey,
-      encryptedPrivateKey: CryptoUtils.encryptBuffer(privateKey)
+      publicKey: publicKey.toString("hex"),
+      encryptedPrivateKey: this.encryptBuffer(privateKey).toString("hex")
     };
   }
 };

@@ -6,6 +6,8 @@
     "@material-ui/core": "^3.9.2",
     "@material-ui/icons": "^3.0.2",
     "classnames": "^2.2.6",
+    "download": "^7.1.0",
+    "downloadjs": "^1.4.7",
     "firebaseui": "^3.5.2",
     "prop-types": "^15.7.1",
     "react": "^16.8.1",

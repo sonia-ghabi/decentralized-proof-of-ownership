@@ -8,8 +8,8 @@ const cors = require("cors");
 const path = require("path");
 const multer = require("multer");
 const upload = multer({ storage: multer.memoryStorage() });
-const crypto = require("crypto");
-const eccrypto = require("eccrypto");
+var request = require("request");
+var fs = require("fs");
 
 // Initialize express config
 const app = express();
@@ -26,59 +26,24 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 /**
- * Get the proof of ownership from the blockchain.
- * GET Params:
- *   hash: the document hash
- */
-app.get("/proof/:hash", async function(req, res) {
-  const hash = req.params.hash;
-  try {
-    const tx = await ProofOfOwnership.getProof(hash);
-    res.send(tx);
-  } catch (e) {
-    res.send(e.message);
-  }
-});
-
-/**
- * Register a new proof of ownership.
+ * Generate the keys pair for the user.
  * Body:
  * {
- *    doc: string
- *    owner: string
+ *    idToken
  * }
  */
-app.post("/", upload.single("img"), async function(req, res) {
+app.post("/generateKeys", async function(req, res) {
   try {
     // Verify the token
     const userId = await Database.verifyToken(req.body.idToken);
-    const userKeys = await Database.readData("user", userId);
 
-    // Save the proof of ownership in the blockchain
-    const tx = await ProofOfOwnership.saveProof(
-      req.file.buffer,
-      userId,
-      userKeys.public
-    );
-
-    // Build the object to write in the database
-    const toWrite = {
-      owner: userId,
-      date: Date.now(),
-      fileName: req.body.fileName,
-      encryptedKey: tx.encryptedKey
-    };
-
-    // Save it in the database
-    await Database.writeData("proof", toWrite, tx.ipfsHash);
-
-    // Return the response
-    res.send(toWrite);
+    // Generate the keys and save them in the database (the private key is encrypted)
+    Database.writeData("user", CryptoUtils.generatePublicPrivateKeys(), userId);
+    res.status("200").send();
   } catch (e) {
-    console.log(e);
     res
       .status(500) // HTTP status 500: Internal server error
-      .send("Internal server error");
+      .send(e.message);
   }
 });
 
@@ -90,7 +55,6 @@ app.post("/check", upload.single("img"), async function(req, res) {
     const tx = await ProofOfOwnership.getProof(req.file.buffer);
     res.send(tx);
   } catch (e) {
-    console.log(e);
     res
       .status(404) // HTTP status 404: NotFound
       .send("Not found");
@@ -98,18 +62,143 @@ app.post("/check", upload.single("img"), async function(req, res) {
 });
 
 /**
- *
+ * Register a new proof of ownership.
+ * Body:
+ * {
+ *    file
+ *    idToken
+ * }
  */
-app.post("/generateKeys", async function(req, res) {
-  // Verify the token
-  const userId = await Database.verifyToken(req.body.idToken);
-  Database.writeData("user", CryptoUtils.generatePublicPrivateKeys(), userId);
-  res.status("200").send();
+app.post("/", upload.single("img"), async function(req, res) {
+  try {
+    // Verify the token
+    const userId = await Database.verifyToken(req.body.idToken);
+
+    // Retrieve the user keys
+    const userKeys = await Database.readData("user", userId);
+
+    // Save the proof of ownership in the blockchain
+    const tx = await ProofOfOwnership.saveProof(
+      req.file.buffer,
+      userId,
+      userKeys.publicKey
+    );
+
+    // Build the object to write in the database
+    const toWrite = {
+      owner: userId,
+      date: Date.now(),
+      fileName: req.body.fileName,
+      encryptedKey: tx.encryptedKey,
+      ipfsHashEncrypted: tx.ipfsHashEncrypted,
+      ipfsHash: tx.ipfsHash
+    };
+
+    // Save it in the database
+    await Database.writeData("proof", toWrite, tx.id);
+
+    // Return the response
+    res.send(toWrite);
+  } catch (e) {
+    res
+      .status(500) // HTTP status 500: Internal server error
+      .send(e.message);
+  }
 });
 
+/**
+ * Register a new usage right for the selected image.
+ * Body:
+ * {
+ *    idToken
+ *    owner (id)
+ *    hash (image to get usage rights for)
+ * }
+ */
+app.post("/getUsageRights", async function(req, res) {
+  try {
+    console.log(req.body);
+    // Verify the token
+    const buyerId = await Database.verifyToken(req.body.idToken);
+
+    // Retrieve the users and the proof of ownership in the database
+    const owner = await Database.readData("user", req.body.owner);
+    const buyer = await Database.readData("user", buyerId);
+    buyer.id = buyerId;
+    const proof = await Database.readData("proof", req.body.hash);
+    proof.id = req.body.hash;
+
+    // Register the usage rights
+    const key = await ProofOfOwnership.registerUsageRights(buyer, owner, proof);
+
+    // Get the file from IPFS
+    var options = {
+      url: "http://localhost:8080/ipfs/" + proof.ipfsHashEncrypted,
+      method: "get",
+      encoding: null
+    };
+    request(options, function(error, response, body) {
+      if (error) {
+        console.error("error:", error);
+      } else {
+        body = CryptoUtils.decryptBuffer(body, key);
+        res.send(body);
+      }
+    });
+  } catch (e) {
+    res
+      .status(500) // HTTP status 500: Internal server error
+      .send(e.message);
+  }
+});
+
+/**
+ * Get all the proof of ownership.
+ */
 app.get("/load", async function(req, res) {
-  const data = await Database.readAll("proof");
-  res.json({ res: data });
+  try {
+    const data = await Database.readAll("proof");
+    res.json({ res: data });
+  } catch (e) {
+    res
+      .status(500) // HTTP status 500: Internal server error
+      .send(e.message);
+  }
 });
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+/*
+app.get("/decrypt:buyer", async function(req, res) {
+  const buyer = await Database.readData("user", req.params.buyer);
+  const decryptedPrivateKey = CryptoUtils.decryptBuffer(
+    Buffer.from(buyer.encryptedPrivateKey, "hex")
+  );
+  let key = await eccrypto.decrypt(decryptedPrivateKey, sell);
+  key = key.toString("ascii");
+
+  /*
+  const toWrite = {
+    key: sell,
+    image: ipfsHash,
+    buyer: buyer.id
+  };
+  await Database.writeData("sell", toWrite, "0");
+
+  var options = {
+    url: "http://localhost:8080/ipfs/" + proof.ipfsHashEncrypted,
+    method: "get",
+    encoding: null
+  };
+
+  console.log("Requesting image..");
+  request(options, function(error, response, body) {
+    if (error) {
+      console.error("error:", error);
+    } else {
+      body = CryptoUtils.decryptBuffer(body, key);
+      fs.writeFileSync("test.jpg", body);
+    }
+  });
+});
+*/
+
+app.listen(port, () => console.log(`App listening on port ${port}!`));
