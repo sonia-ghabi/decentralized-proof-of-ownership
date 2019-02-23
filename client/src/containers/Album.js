@@ -15,15 +15,16 @@ import Typography from "@material-ui/core/Typography";
 import CardActions from "@material-ui/core/CardActions";
 import { withStyles } from "@material-ui/core/styles";
 import InputBase from "@material-ui/core/InputBase";
-
 import download from "downloadjs";
 import firebase from "firebase";
 
 import UploadModal from "./UploadModal";
 import SignIn from "./SignIn";
+import UsageList from "./UsageList";
 
 import Database from "../lib/databaseHelper";
 import { generateKeys, getUsageRights } from "../lib/apiHelper";
+
 import styles from "./style/Album.style.js";
 
 class Album extends React.Component {
@@ -47,6 +48,8 @@ class Album extends React.Component {
     this.searchPictures = this.searchPictures.bind(this);
     this.buildCards = this.buildCards.bind(this);
     this.downloadImage = this.downloadImage.bind(this);
+    this.handleUsageModalOpen = this.handleUsageModalOpen.bind(this);
+    this.handleUsageModalClose = this.handleUsageModalClose.bind(this);
 
     // Initialize state
     this.state = {
@@ -55,7 +58,9 @@ class Album extends React.Component {
       cards: [],
       openSignIn: false,
       user: null,
-      searchValue: ""
+      searchValue: "",
+      openUsageDialog: false,
+      cardUsers: []
     };
 
     // Handle sign in/out
@@ -187,10 +192,30 @@ class Album extends React.Component {
     const res = await getUsageRights(card, idToken);
     if (res.status == 200) {
       const blob = await res.blob();
-      console.log(blob.type);
       download(blob, card.originalFileName);
     }
   }
+
+  /**
+   * Execute when the modal is open.
+   */
+  async handleUsageModalOpen(cardId) {
+    // Reload the users list
+    const res = await Database.readData("proof", cardId);
+    this.setState({
+      openUsageDialog: true,
+      cardUsers: res.users
+    });
+  }
+
+  /**
+   * Execute when the modal is open.
+   */
+  handleUsageModalClose = () => {
+    this.setState({
+      openUsageDialog: false
+    });
+  };
 
   /**
    * Handles state change.
@@ -331,6 +356,17 @@ class Album extends React.Component {
                         </Button>
                       </CardActions>
                     )}
+                    {this.state.user && card.owner == this.state.user.uid && (
+                      <CardActions>
+                        <Button
+                          size="small"
+                          color="primary"
+                          onClick={() => this.handleUsageModalOpen(card.id)}
+                        >
+                          See usage
+                        </Button>
+                      </CardActions>
+                    )}
                   </Card>
                 </Grid>
               ))}
@@ -356,6 +392,11 @@ class Album extends React.Component {
           handleClose={this.handleUploadModalClose}
           open={this.state.openUploadDialog}
           files={this.state.files}
+        />
+        <UsageList
+          handleClose={this.handleUsageModalClose}
+          open={this.state.openUsageDialog}
+          users={this.state.cardUsers}
         />
       </React.Fragment>
     );

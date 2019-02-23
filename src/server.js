@@ -133,6 +133,10 @@ app.post("/getUsageRights", async function(req, res) {
     // Register the usage rights
     const key = await ProofOfOwnership.registerUsageRights(buyer, owner, proof);
 
+    // Update the database
+    Database.updateData("proof", { users: [buyerId] }, proof.id);
+    Database.updateData("user", { rights: [proof.id] }, buyer.id);
+
     // Get the file from IPFS
     var options = {
       url: "http://localhost:8080/ipfs/" + proof.ipfsHashEncrypted,

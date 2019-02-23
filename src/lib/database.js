@@ -39,6 +39,28 @@ class Database {
   }
 
   /**
+   * Updates data in the database.
+   * @param {string} collectionName
+   * @param {object} object
+   * @param {string} id
+   */
+  async updateData(collectionName, object, id) {
+    let updateObject = {};
+    Object.keys(object).forEach(key => {
+      if (Array.isArray(object[key])) {
+        updateObject[key] = admin.firestore.FieldValue.arrayUnion.apply(
+          this,
+          object[key]
+        );
+      } else updateObject[key] = object[key];
+    });
+    return this.db
+      .collection(collectionName)
+      .doc(id)
+      .update(updateObject);
+  }
+
+  /**
    * Reads data from the database.
    * @param {string} collectionName
    * @param {string} id

@@ -20,6 +20,13 @@ class Database {
     this.db = firebase.firestore();
   }
 
+  /**
+   * Reads data from the database according to the filter.
+   * @param {string} collectionName
+   * @param {string} fieldName
+   * @param {string} op
+   * @param {string} value
+   */
   async readWithFilter(collectionName, fieldName, op, value) {
     // Query the database
     const res = await this.db
@@ -30,6 +37,22 @@ class Database {
       acc[doc.id] = doc.data();
       return acc;
     }, {});
+  }
+
+  /**
+   * Reads data from the database.
+   * @param {string} collectionName
+   * @param {string} id
+   */
+  async readData(collectionName, id) {
+    // Get the data by Id
+    const req = await this.db
+      .collection(collectionName)
+      .doc(id)
+      .get();
+
+    // Return the object
+    return req.data();
   }
 }
 
