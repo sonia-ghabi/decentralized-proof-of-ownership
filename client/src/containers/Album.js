@@ -1,31 +1,37 @@
 import React from "react";
 import PropTypes from "prop-types";
-import classNames from "classnames";
-import AppBar from "@material-ui/core/AppBar";
-import Button from "@material-ui/core/Button";
-import CameraIcon from "@material-ui/icons/PhotoCamera";
-import SearchIcon from "@material-ui/icons/Search";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import CardMedia from "@material-ui/core/CardMedia";
-import CssBaseline from "@material-ui/core/CssBaseline";
 import Grid from "@material-ui/core/Grid";
-import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
-import CardActions from "@material-ui/core/CardActions";
 import { withStyles } from "@material-ui/core/styles";
-import InputBase from "@material-ui/core/InputBase";
 import download from "downloadjs";
 import firebase from "firebase";
-
-import UploadModal from "./UploadModal";
-import SignIn from "./SignIn";
+import UploadModal from "../components/UploadModal";
+import Header from "../components/Header";
+import CardGrid from "../components/CardGrid";
 import UsageList from "./UsageList";
-
 import Database from "../lib/databaseHelper";
-import { generateKeys, getUsageRights } from "../lib/apiHelper";
+import { getUsageRights } from "../lib/apiHelper";
 
-import styles from "./style/Album.style.js";
+const styles = theme => ({
+  heroUnit: {
+    backgroundColor: theme.palette.background.paper
+  },
+  heroContent: {
+    maxWidth: 600,
+    margin: "0 auto",
+    padding: `${theme.spacing.unit * 8}px 0 ${theme.spacing.unit * 6}px`
+  },
+  heroButtons: {
+    marginTop: theme.spacing.unit * 4
+  },
+  footer: {
+    backgroundColor: theme.palette.background.paper,
+    padding: theme.spacing.unit * 6
+  },
+  grow: {
+    flexGrow: 1
+  }
+});
 
 class Album extends React.Component {
   /**
@@ -35,30 +41,19 @@ class Album extends React.Component {
   constructor(props) {
     super(props);
 
-    // ...
-    this.fileInput = React.createRef();
-    this.auth = firebase.auth();
-
     // Bind 'this' to be able to reuse it the function itself
-    this.handleUploadModalOpen = this.handleUploadModalOpen.bind(this);
-    this.handleUploadModalClose = this.handleUploadModalClose.bind(this);
-    this.signInClick = this.signInClick.bind(this);
-    this.signInClose = this.signInClose.bind(this);
-    this.signOut = this.signOut.bind(this);
     this.searchPictures = this.searchPictures.bind(this);
     this.buildCards = this.buildCards.bind(this);
     this.downloadImage = this.downloadImage.bind(this);
     this.handleUsageModalOpen = this.handleUsageModalOpen.bind(this);
     this.handleUsageModalClose = this.handleUsageModalClose.bind(this);
+    this.loadMyAlbum = this.loadMyAlbum.bind(this);
 
     // Initialize state
     this.state = {
-      openUploadDialog: false,
-      files: null,
       cards: [],
-      openSignIn: false,
+
       user: null,
-      searchValue: "",
       openUsageDialog: false,
       cardUsers: []
     };
@@ -89,70 +84,10 @@ class Album extends React.Component {
   }
 
   /**
-   * Execute when the modal is open.
-   */
-  handleUploadModalOpen = () => {
-    this.setState({
-      openUploadDialog: true,
-      files: this.fileInput.current.files
-    });
-  };
-
-  /**
-   * Execute when the modal is closed.
-   */
-  handleUploadModalClose = () => {
-    // Update the state
-    this.setState({
-      openUploadDialog: false,
-      files: null
-    });
-    this.fileInput.current.value = "";
-
-    // Reload the album when the modal is closed
-    this.loadMyAlbum();
-  };
-
-  /**
-   * Action on click of the sign in button.
-   */
-  signInClick() {
-    // Update the state
-    this.setState({
-      openSignIn: true
-    });
-  }
-
-  /**
-   * Action on close of the sign in pop up.
-   */
-  async signInClose(isNewUser) {
-    // Update the state
-    this.setState({
-      openSignIn: false,
-      user: this.auth.currentUser
-    });
-
-    // If the user just signed up, generate the pair of keys
-    const token = await this.state.user.getIdToken(true /*force refresh*/);
-    if (isNewUser) generateKeys(token);
-
-    // Load the album
-    this.loadMyAlbum();
-  }
-
-  /**
-   * Action on sign out.
-   */
-  async signOut() {
-    await this.auth.signOut();
-  }
-
-  /**
    * Search pictures in the global repository
    */
-  async searchPictures() {
-    if (!this.state.searchValue) {
+  async searchPictures(searchValue) {
+    if (!searchValue) {
       this.loadMyAlbum();
       return;
     }
@@ -160,7 +95,7 @@ class Album extends React.Component {
       "proof",
       "fileName",
       "==",
-      this.state.searchValue
+      searchValue
     );
     this.buildCards(res);
   }
@@ -173,7 +108,7 @@ class Album extends React.Component {
     const cards = Object.entries(result).map(([id, data]) => {
       return {
         id: id,
-        url: "http://localhost:8080/ipfs/" + data.ipfsHash,
+        url: process.env.REACT_APP_IPFS_URL + data.ipfsHash,
         name: data.fileName,
         date: new Date(data.date).toLocaleString(),
         owner: data.owner,
@@ -231,60 +166,13 @@ class Album extends React.Component {
     const props = this.props;
     const { classes } = props;
 
-    const signIn = this.state.openSignIn ? (
-      <SignIn signInSuccess={this.signInClose} />
-    ) : null;
-    const signButton = !this.state.user ? (
-      <Button color="inherit" onClick={this.signInClick}>
-        Sign in
-      </Button>
-    ) : (
-      <Button color="inherit" onClick={this.signOut}>
-        Sign out
-      </Button>
-    );
-
     return (
       <React.Fragment>
-        <CssBaseline />
-        {signIn}
-        <AppBar position="static" className={classes.appBar}>
-          <Toolbar>
-            <CameraIcon className={classes.icon} />
-            <Typography
-              className={classes.grow}
-              variant="h6"
-              color="inherit"
-              noWrap
-            >
-              Proof of Ownership
-            </Typography>
-            <div className={classes.search}>
-              <div className={classes.searchIcon}>
-                <SearchIcon />
-              </div>
-              <InputBase
-                disabled={this.state.user == null}
-                value={this.state.searchValue}
-                onChange={this.handleChange("searchValue")}
-                onKeyPress={ev => {
-                  if (ev.key === "Enter") {
-                    this.searchPictures();
-                    ev.preventDefault();
-                  }
-                }}
-                placeholder="Search in the global repo"
-                classes={{
-                  root: classes.inputRoot,
-                  input: classes.inputInput
-                }}
-              />
-            </div>
-            {signButton}
-          </Toolbar>
-        </AppBar>
+        <Header
+          onSearch={this.searchPictures}
+          disabled={this.state.user == null}
+        />
         <main>
-          {/* Hero unit */}
           <div className={classes.heroUnit}>
             <div className={classes.heroContent}>
               <Typography
@@ -304,76 +192,26 @@ class Album extends React.Component {
               >
                 The blockchain enabled photo album storage app.
               </Typography>
+
               <div className={classes.heroButtons}>
                 <Grid container spacing={16} justify="center">
                   <Grid item>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => this.fileInput.current.click()}
+                    <UploadModal
+                      onClose={this.loadMyAlbum}
                       disabled={this.state.user == null}
-                    >
-                      Upload your picture
-                    </Button>
-                    <input
-                      className={classes.fileInput}
-                      type="file"
-                      id="fileSelector"
-                      accept="images/*"
-                      ref={this.fileInput}
-                      onChange={this.handleUploadModalOpen}
                     />
                   </Grid>
                 </Grid>
               </div>
             </div>
           </div>
-          <div className={classNames(classes.layout, classes.cardGrid)}>
-            {/* End hero unit */}
-            <Grid container spacing={40}>
-              {this.state.cards.map(card => (
-                <Grid item key={card.id} sm={6} md={4} lg={3}>
-                  <Card className={classes.card}>
-                    <CardMedia
-                      className={classes.cardMedia}
-                      image={card.url}
-                      title={card.name}
-                    />
-                    <CardContent className={classes.cardContent}>
-                      <Typography gutterBottom variant="h5" component="h2">
-                        {card.name}
-                      </Typography>
-                      <Typography>Uploaded on: {card.date}</Typography>
-                    </CardContent>
-                    {this.state.user && card.owner != this.state.user.uid && (
-                      <CardActions>
-                        <Button
-                          size="small"
-                          color="primary"
-                          onClick={() => this.downloadImage(card)}
-                        >
-                          Use image
-                        </Button>
-                      </CardActions>
-                    )}
-                    {this.state.user && card.owner == this.state.user.uid && (
-                      <CardActions>
-                        <Button
-                          size="small"
-                          color="primary"
-                          onClick={() => this.handleUsageModalOpen(card.id)}
-                        >
-                          See usage
-                        </Button>
-                      </CardActions>
-                    )}
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </div>
+          <CardGrid
+            user={this.state.user}
+            cards={this.state.cards}
+            onDownloadImage={this.downloadImage}
+            onSeeUsage={this.handleUsageModalOpen}
+          />
         </main>
-        {/* Footer */}
         <footer className={classes.footer}>
           <Typography variant="h6" align="center" gutterBottom>
             Wesh
@@ -387,12 +225,6 @@ class Album extends React.Component {
             Thanks for using our app :)
           </Typography>
         </footer>
-        {/* End footer */}
-        <UploadModal
-          handleClose={this.handleUploadModalClose}
-          open={this.state.openUploadDialog}
-          files={this.state.files}
-        />
         <UsageList
           handleClose={this.handleUsageModalClose}
           open={this.state.openUsageDialog}
