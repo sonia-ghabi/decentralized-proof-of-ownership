@@ -1,7 +1,7 @@
 const { Contract, Wallet, providers } = require("ethers");
 const ProofContract = require("../../blockchain/build/contracts/ProofOfOwnership.json");
 const ipfs = require("./ipfs.js");
-const CryptoUtils = require("./cryptoUtils");
+const CryptoUtils = require("./crypto-utils");
 const uuidv1 = require("uuid/v1");
 const eccrypto = require("eccrypto");
 const sharp = require("sharp");

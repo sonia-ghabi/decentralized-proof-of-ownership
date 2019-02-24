@@ -1,7 +1,7 @@
 global.__basedir = __dirname;
 require("dotenv").config();
-const CryptoUtils = require("./lib/cryptoUtils");
-const ProofOfOwnership = require("./lib/proofOfOwnership");
+const CryptoUtils = require("./lib/crypto-utils");
+const ProofOfOwnership = require("./lib/proof-of-ownership");
 const Database = require("./lib/database.js");
 const express = require("express");
 const cors = require("cors");
