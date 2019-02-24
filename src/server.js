@@ -13,17 +13,16 @@ var fs = require("fs");
 
 // Initialize express config
 const app = express();
-const port = 4000;
+
 const bodyParser = require("body-parser");
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
-app.use(express.static(path.join(__dirname, "public")));
 
-// Set CORS
-const corsOptions = {
-  origin: "http://localhost:3000"
-};
-app.use(cors(corsOptions));
+app.use(express.static(path.join(__dirname, '../build')));
+
+app.get('/', function(req, res) {
+  res.sendFile(path.join(__dirname, '../build', 'index.html'));
+});
 
 /**
  * Generate the keys pair for the user.
@@ -71,7 +70,7 @@ app.post("/check", upload.single("img"), async function(req, res) {
  *    originalFileName
  * }
  */
-app.post("/", upload.single("img"), async function(req, res) {
+app.post("/save", upload.single("img"), async function(req, res) {
   try {
     // Verify the token
     const userId = await Database.verifyToken(req.body.idToken);
@@ -139,7 +138,7 @@ app.post("/getUsageRights", async function(req, res) {
 
     // Get the file from IPFS
     var options = {
-      url: "http://localhost:8080/ipfs/" + proof.ipfsHashEncrypted,
+      url: process.env.IPFS_GATEWAY + proof.ipfsHashEncrypted,
       method: "get",
       encoding: null
     };
@@ -207,4 +206,5 @@ app.get("/decrypt:buyer", async function(req, res) {
 });
 */
 
+const port = process.env.PORT || 4000;
 app.listen(port, () => console.log(`App listening on port ${port}!`));

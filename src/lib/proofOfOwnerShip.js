@@ -11,11 +11,13 @@ const sec = require("secp256k1");
 // Set provider
 // Once a Ganache node is running, it behaves very similar to a
 // JSON-RPC API node.
-const url = "http://localhost:7545";
+const url = process.env.ETH_PROVIDER;
 const provider = new providers.JsonRpcProvider(url);
 
 // Get contract and set wallet
 const wallet = new Wallet(process.env.walletKey, provider);
+wallet.getAddress().then(addr => console.log(`Wallet address: ${addr}`));
+wallet.getBalance().then(bn => console.log(`Wallet balance: ${bn.toString()}`));
 const contractAddress = ProofContract.networks[process.env.networkId].address;
 const contract = new Contract(contractAddress, ProofContract.abi, wallet);
 

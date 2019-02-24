@@ -1,4 +1,4 @@
-const serverUrl = "http://localhost:4000/";
+const serverUrl = process.env.REACT_APP_SERVER_URL;
 
 /**
  * Claim the ownership of the given picture.
@@ -15,7 +15,7 @@ export async function claimOwnership(files, fileName, idToken) {
   formData.append("originalFileName", files[0].name);
 
   // Execute the request
-  return await executePost(formData, "");
+  return await executePost(formData, "save");
 }
 
 /**
