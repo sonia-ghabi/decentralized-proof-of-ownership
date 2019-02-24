@@ -24,6 +24,7 @@
     "secp256k1": "^3.6.2",
     "sharp": "^0.21.3",
     "truffle": "^5.0.5",
+    "truffle-hdwallet-provider": "^1.0.4",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
@@ -31,10 +32,12 @@
     "rimraf": "^2.6.3"
   },
   "scripts": {
+    "postinstall": "cd client && yarn install",
     "clean": "rimraf ./blockchain/build ./build",
     "start": "nodemon ./src/server.js",
-    "build": "yarn clean && yarn migrate && cd client && yarn build",
+    "build": "yarn clean && cd client && yarn build",
     "migrate": "cd ./blockchain && truffle migrate",
+    "migrate:rinkeby": "cd ./blockchain && truffle migrate --network rinkeby",
     "ganache": "ganache-cli --networkId=5777 -l 90000000 -p 7545 -m \"provide accident chronic quote allow crystal like neutral mountain split match you\""
   },
   "heroku-run-build-script": true
