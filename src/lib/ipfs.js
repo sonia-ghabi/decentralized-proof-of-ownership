@@ -1,7 +1,11 @@
 const ipfsClient = require("ipfs-http-client");
 
 // Run with local daemon
-var ipfs = ipfsClient(process.env.IPFS_API);
+var ipfs = ipfsClient({
+  host: process.env.IPFS_API_URL,
+  port: process.env.IPFS_API_PORT,
+  protocol: process.env.IPFS_API_PROTOCOL
+});
 
 /**
  * Saves the file on IPFS.
