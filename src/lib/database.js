@@ -8,7 +8,7 @@ class Database {
    * Constructor.
    */
   constructor() {
-    const serviceAccount = require(process.env.privateKeyPath);
+    const serviceAccount = JSON.parse(process.env.dbPrivateKey);
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       databaseURL: "https://proof-of-ownership-fe435.firebaseio.com"

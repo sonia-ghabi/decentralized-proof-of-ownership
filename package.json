@@ -33,7 +33,7 @@
   },
   "scripts": {
     "postinstall": "cd client && yarn install",
-    "clean": "rimraf ./blockchain/build ./build",
+    "clean": "rimraf ./build",
     "start": "nodemon ./src/server.js",
     "build": "yarn clean && cd client && yarn build",
     "migrate": "cd ./blockchain && truffle migrate",
