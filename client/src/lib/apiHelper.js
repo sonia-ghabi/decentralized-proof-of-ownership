@@ -1,4 +1,4 @@
-const serverUrl = process.env.REACT_APP_SERVER_URL;
+const serverUrl = process.env.REACT_APP_SERVER_URL || '/';
 
 /**
  * Claim the ownership of the given picture.
